@@ -37,6 +37,12 @@ public:
         // Set to 0 to disable. Requires ego_speed to be passed to update().
         double time_to_contact_threshold = 2.5;  // seconds
 
+        // Uncertainty-aware thresholds: inflate overtake distance and lateral gap
+        // requirements by (sigma * factor). Prevents committing to an overtake when
+        // the KF position estimate is unreliable (e.g., partial occlusion).
+        double sigma_overtake_factor = 1.0;  // meters of margin per meter of 1-sigma
+        double max_s_sigma_to_overtake = 1.5; // refuse overtake if pos uncertainty > this (m)
+
         // Track geometry
         double track_length = 0.0;           // 0 = use 200m heuristic for wrap-around
     };

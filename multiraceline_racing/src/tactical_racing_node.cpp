@@ -53,13 +53,16 @@ public:
         declare_parameter("detection_min_points",   3);
         declare_parameter("detection_max_width",    0.6);
 
-        // Opponent tracker (KF)
-        declare_parameter("tracker_kf_q_pos",           0.05);
-        declare_parameter("tracker_kf_q_vel",           0.5);
-        declare_parameter("tracker_kf_r_pos",           0.1);
-        declare_parameter("tracker_max_age",             0.8);
-        declare_parameter("tracker_max_association_dist",1.0);
-        declare_parameter("tracker_max_predicted_vs",    5.0);
+        // Opponent tracker — constant-acceleration KF
+        declare_parameter("tracker_kf_q_pos",        0.05);
+        declare_parameter("tracker_kf_q_vel",        0.5);
+        declare_parameter("tracker_kf_q_acc",        2.0);
+        declare_parameter("tracker_kf_r_pos",        0.1);
+        declare_parameter("tracker_max_age",          0.8);
+        declare_parameter("tracker_max_predicted_vs", 5.0);
+        declare_parameter("tracker_gate_s",           3.0);
+        declare_parameter("tracker_gate_d",           1.0);
+        declare_parameter("tracker_chi_threshold",    3.5);
 
         // State machine
         declare_parameter("follow_threshold_s",        6.0);
@@ -71,6 +74,8 @@ public:
         declare_parameter("overtake_entry_hold",       0.2);
         declare_parameter("overtake_exit_hold",        1.2);
         declare_parameter("time_to_contact_threshold", 2.5);
+        declare_parameter("sigma_overtake_factor",     1.0);
+        declare_parameter("max_s_sigma_to_overtake",   1.5);
 
         // ── Build components ─────────────────────────────────────────────────
         loadRacelines();
@@ -185,13 +190,16 @@ private:
         detector_ = std::make_unique<OpponentDetector>(p);
 
         OpponentTracker::Params tp;
-        tp.kf_q_pos            = get_parameter("tracker_kf_q_pos").as_double();
-        tp.kf_q_vel            = get_parameter("tracker_kf_q_vel").as_double();
-        tp.kf_r_pos            = get_parameter("tracker_kf_r_pos").as_double();
-        tp.max_age             = get_parameter("tracker_max_age").as_double();
-        tp.max_association_dist= get_parameter("tracker_max_association_dist").as_double();
-        tp.max_predicted_vs    = get_parameter("tracker_max_predicted_vs").as_double();
-        tp.track_length        = library_.frenetFrame().totalLength();
+        tp.kf_q_pos         = get_parameter("tracker_kf_q_pos").as_double();
+        tp.kf_q_vel         = get_parameter("tracker_kf_q_vel").as_double();
+        tp.kf_q_acc         = get_parameter("tracker_kf_q_acc").as_double();
+        tp.kf_r_pos         = get_parameter("tracker_kf_r_pos").as_double();
+        tp.max_age          = get_parameter("tracker_max_age").as_double();
+        tp.max_predicted_vs = get_parameter("tracker_max_predicted_vs").as_double();
+        tp.gate_s           = get_parameter("tracker_gate_s").as_double();
+        tp.gate_d           = get_parameter("tracker_gate_d").as_double();
+        tp.chi_threshold    = get_parameter("tracker_chi_threshold").as_double();
+        tp.track_length     = library_.frenetFrame().totalLength();
         tracker_ = std::make_unique<OpponentTracker>(tp);
     }
 
@@ -207,6 +215,8 @@ private:
         p.overtake_entry_hold       = get_parameter("overtake_entry_hold").as_double();
         p.overtake_exit_hold        = get_parameter("overtake_exit_hold").as_double();
         p.time_to_contact_threshold = get_parameter("time_to_contact_threshold").as_double();
+        p.sigma_overtake_factor     = get_parameter("sigma_overtake_factor").as_double();
+        p.max_s_sigma_to_overtake   = get_parameter("max_s_sigma_to_overtake").as_double();
         p.track_length              = library_.frenetFrame().totalLength();
         state_machine_ = std::make_unique<TacticalStateMachine>(p);
     }

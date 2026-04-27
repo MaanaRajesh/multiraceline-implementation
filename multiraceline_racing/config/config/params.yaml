@@ -24,14 +24,20 @@ tactical_racing_node:
     detection_min_points:  3
     detection_max_width:   0.6
 
-    # Opponent tracker — Kalman filter
-    # Tune kf_q_pos/kf_q_vel up if opponent accelerates hard; kf_r_pos up if LiDAR is noisy.
-    tracker_kf_q_pos:           0.05   # process noise: position variance per second (m²/s)
-    tracker_kf_q_vel:           0.5    # process noise: velocity variance per second (m²/s³)
-    tracker_kf_r_pos:           0.1    # measurement noise: position variance (m²)
-    tracker_max_age:             0.8   # seconds before dropping a track with no detection
-    tracker_max_association_dist: 1.0  # max LiDAR-to-track match distance (m)
-    tracker_max_predicted_vs:    5.0   # clamp predicted along-track speed (m/s)
+    # Opponent tracker — constant-acceleration Kalman filter
+    # q_acc: increase if opponent brakes/accelerates hard (e.g. in turns). Higher = track faster, noisier.
+    # r_pos: increase if LiDAR clusters are noisy or the car is far away.
+    tracker_kf_q_pos:    0.05   # process noise: position (m²/s)
+    tracker_kf_q_vel:    0.5    # process noise: velocity (m²/s³)
+    tracker_kf_q_acc:    2.0    # process noise: acceleration (m²/s⁵) — key for braking zones
+    tracker_kf_r_pos:    0.1    # measurement noise: position (m²)
+    tracker_max_age:      0.8   # seconds before dropping a track with no detection
+    tracker_max_predicted_vs: 5.0  # clamp predicted along-track speed (m/s)
+    # Frenet gating — pre-filter detections before any KF math
+    tracker_gate_s:      3.0    # max allowed |Δs| for association (m)
+    tracker_gate_d:      1.0    # max allowed |Δd| for association (m)
+    # Mahalanobis gate — chi threshold for 1-D normalized innovation (~3.0 = 99.7%)
+    tracker_chi_threshold: 3.5
 
     # Tactical state machine — distance thresholds (meters in Frenet arc-length)
     follow_threshold_s:   6.0   # start following if opponent < N m ahead
@@ -44,6 +50,11 @@ tactical_racing_node:
     state_hold_time:    0.5   # default hold for all other transitions (s)
     overtake_entry_hold: 0.2  # shorter: enter overtake quickly when conditions are met (s)
     overtake_exit_hold:  1.2  # longer: don't abort an ongoing overtake on a transient gap (s)
+
+    # Uncertainty-aware overtake thresholds
+    # Thresholds inflate by (sigma * factor) when KF is uncertain post-occlusion.
+    sigma_overtake_factor:     1.0   # m of extra margin per m of 1-sigma position uncertainty
+    max_s_sigma_to_overtake:   1.5   # refuse overtake attempt if along-track sigma exceeds this (m)
 
     # Velocity-predictive trigger: if time-to-contact < this, engage overtake early (s)
     # Set to 0.0 to disable. Requires odom (not PoseStamped) for ego speed.

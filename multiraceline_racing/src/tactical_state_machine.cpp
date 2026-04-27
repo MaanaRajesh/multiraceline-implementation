@@ -51,30 +51,34 @@ TacticalState TacticalStateMachine::computeDesired(
     // ── Opponent ahead ────────────────────────────────────────────────────────
     if (ds > 0.0 && ds < params_.follow_threshold_s) {
 
+        // Uncertainty-aware thresholds: inflate required overtake gap and
+        // lateral clearance when the KF position estimate is uncertain.
+        // High covariance (post-occlusion, partial view) → be conservative.
+        const double s_sig = opp->s_sigma;
+        const double d_sig = opp->d_sigma;
+        const double f = params_.sigma_overtake_factor;
+        double overtake_thr = params_.overtake_threshold_s + s_sig * f;
+        double lat_gap      = params_.min_lateral_gap       + d_sig * f;
+
+        // Hard block: refuse to initiate an overtake if position uncertainty is
+        // too high to reliably judge which side the opponent is on.
+        bool uncertain = (s_sig > params_.max_s_sigma_to_overtake);
+
         // Velocity-predictive trigger: compute time-to-contact if closing.
-        // opp->vs is the KF-estimated along-track speed of the opponent.
-        // If we're closing fast, treat the gap as shorter so we engage sooner.
         double effective_ds = ds;
-        if (params_.time_to_contact_threshold > 0.0 && ego_speed > 0.1) {
-            double closing_rate = ego_speed - opp->vs;  // positive = closing
+        if (!uncertain && params_.time_to_contact_threshold > 0.0 && ego_speed > 0.1) {
+            double closing_rate = ego_speed - opp->vs;
             if (closing_rate > 0.2) {
                 double ttc = ds / closing_rate;
                 if (ttc < params_.time_to_contact_threshold) {
-                    // Closing fast — treat as already at overtake distance
-                    effective_ds = params_.overtake_threshold_s * 0.5;
+                    effective_ds = overtake_thr * 0.5;
                 }
             }
         }
 
-        if (effective_ds < params_.overtake_threshold_s) {
-            // Close enough — attempt pass if lateral gap exists on either side
-            if (ego_d < opp->d - params_.min_lateral_gap) {
-                return TacticalState::OVERTAKING_LEFT;
-            }
-            if (ego_d > opp->d + params_.min_lateral_gap) {
-                return TacticalState::OVERTAKING_RIGHT;
-            }
-            // No lateral gap — stay in following and wait for an opening
+        if (!uncertain && effective_ds < overtake_thr) {
+            if (ego_d < opp->d - lat_gap) return TacticalState::OVERTAKING_LEFT;
+            if (ego_d > opp->d + lat_gap) return TacticalState::OVERTAKING_RIGHT;
         }
         return TacticalState::FOLLOWING;
     }
