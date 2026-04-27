@@ -109,7 +109,7 @@ void OpponentTracker::associateAndUpdate(
     double best_s_meas = 0.0, best_d_meas = 0.0;
 
     for (const auto& det : dets) {
-        // ── Improvement 3: Frenet gating ─────────────────────────────────────
+        // Frenet gating ─────────────────────────────────────
         // Convert detection to Frenet and reject anything clearly outside the
         // predicted track extent. This is faster than KF math and eliminates
         // wall reflections and other cars that are far in s or d.
@@ -122,7 +122,7 @@ void OpponentTracker::associateAndUpdate(
 
         if (std::abs(ds) > params_.gate_s || std::abs(dd) > params_.gate_d) continue;
 
-        // ── Improvement 2: Mahalanobis gating ────────────────────────────────
+        //  Mahalanobis gating ────────────────────────────────
         // Use innovation covariance (P[0][0] + R) to normalize the residual.
         // This accounts for KF uncertainty: a large P allows wider matches.
         double s_meas = kf_s_.pos + ds;  // wrap-corrected measurement
@@ -215,9 +215,9 @@ std::optional<TrackedOpponent> OpponentTracker::update(
 void OpponentTracker::setExpectedVs(double vs_expected) {
     if (!opponent_) return;
     // Gently nudge predicted along-track speed toward the known raceline speed
-    // when the opponent is out of sight. Prevents unrealistic drift of the KF.
+    // when the opponent is out of sight to prevent unrealistic drift of the KF.
     kf_s_.vel = 0.9 * kf_s_.vel + 0.1 * vs_expected;
     opponent_->vs = kf_s_.vel;
 }
 
-}  // namespace multiraceline
+} 
