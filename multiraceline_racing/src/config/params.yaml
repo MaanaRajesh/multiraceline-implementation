@@ -1,0 +1,33 @@
+tactical_racing_node:
+  ros__parameters:
+    use_sim: true
+
+    # Raceline CSV paths — set these to your actual waypoint files
+    centerline_csv:     ""
+    optimal_csv:        ""
+    inside_attack_csv:  ""
+    outside_attack_csv: ""
+    defensive_csv:      ""
+
+    # Pure Pursuit
+    lookahead_min:      0.5
+    lookahead_max:      2.0
+    fast_speed:         2.0
+    slow_speed:         0.5
+    steering_limit:     0.4189
+    steer_alpha:        0.8
+    use_waypoint_speed: true
+
+    # Opponent detection
+    detection_max_range:   5.0
+    detection_cluster_gap: 0.3
+    detection_min_points:  3
+    detection_max_width:   0.6
+
+    # Tactical state machine
+    follow_threshold_s:   6.0
+    overtake_threshold_s: 3.0
+    overtake_complete_s:  2.0
+    defend_threshold_s:   4.0
+    min_lateral_gap:      0.5
+    state_hold_time:      0.5

@@ -1,0 +1,20 @@
+# Overtaking zones for your track.
+# Each zone is a section of track (by arc-length s) where passing is feasible.
+# Generate these offline using the raceline_UI optimizer or manually from track geometry.
+#
+# s_start / s_end: arc-length along centerline (meters)
+# preferred_side: "inside" or "outside"
+# width_margin: estimated lateral clearance (meters)
+
+overtaking_zones:
+  - s_start: 0.0
+    s_end:   5.0
+    preferred_side: inside
+    width_margin: 0.7
+
+  # Add more zones after running the zone-identification script:
+  #
+  # - s_start: 15.0
+  #   s_end:   22.0
+  #   preferred_side: outside
+  #   width_margin: 0.8

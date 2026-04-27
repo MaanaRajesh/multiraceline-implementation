@@ -1,0 +1,50 @@
+tactical_racing_node:
+  ros__parameters:
+    use_sim: true
+
+    # Raceline CSV paths — set these to your actual waypoint files
+    centerline_csv:     ""
+    optimal_csv:        ""
+    inside_attack_csv:  ""
+    outside_attack_csv: ""
+    defensive_csv:      ""
+
+    # Pure Pursuit
+    lookahead_min:      0.5
+    lookahead_max:      2.0
+    fast_speed:         2.0
+    slow_speed:         0.5
+    steering_limit:     0.4189
+    steer_alpha:        0.8
+    use_waypoint_speed: true
+
+    # Opponent detection
+    detection_max_range:   5.0
+    detection_cluster_gap: 0.3
+    detection_min_points:  3
+    detection_max_width:   0.6
+
+    # Opponent tracker — Kalman filter
+    # Tune kf_q_pos/kf_q_vel up if opponent accelerates hard; kf_r_pos up if LiDAR is noisy.
+    tracker_kf_q_pos:           0.05   # process noise: position variance per second (m²/s)
+    tracker_kf_q_vel:           0.5    # process noise: velocity variance per second (m²/s³)
+    tracker_kf_r_pos:           0.1    # measurement noise: position variance (m²)
+    tracker_max_age:             0.8   # seconds before dropping a track with no detection
+    tracker_max_association_dist: 1.0  # max LiDAR-to-track match distance (m)
+    tracker_max_predicted_vs:    5.0   # clamp predicted along-track speed (m/s)
+
+    # Tactical state machine — distance thresholds (meters in Frenet arc-length)
+    follow_threshold_s:   6.0   # start following if opponent < N m ahead
+    overtake_threshold_s: 3.0   # attempt overtake if < N m ahead
+    overtake_complete_s:  2.0   # done when we are N m ahead of opponent
+    defend_threshold_s:   4.0   # defend if opponent < N m behind
+    min_lateral_gap:      0.5   # minimum lateral clearance (m) for an overtake attempt
+
+    # Asymmetric hysteresis — commit to overtakes fast, release slowly
+    state_hold_time:    0.5   # default hold for all other transitions (s)
+    overtake_entry_hold: 0.2  # shorter: enter overtake quickly when conditions are met (s)
+    overtake_exit_hold:  1.2  # longer: don't abort an ongoing overtake on a transient gap (s)
+
+    # Velocity-predictive trigger: if time-to-contact < this, engage overtake early (s)
+    # Set to 0.0 to disable. Requires odom (not PoseStamped) for ego speed.
+    time_to_contact_threshold: 2.5
